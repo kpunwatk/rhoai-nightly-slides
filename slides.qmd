@@ -1,0 +1,297 @@
+---
+title: "Installing RHOAI Nightly Builds via OLM"
+subtitle: "DDD Session"
+author: "Karishma Punwatkar"
+format:
+  revealjs:
+    theme: dark
+    transition: slide
+    slide-number: true
+    footer: "RHOAI Nightly Installation"
+    width: 1280
+    height: 720
+---
+
+## Agenda
+
+- What is RHOAI & OLM?
+- Prerequisites
+- Installation Walkthrough (with demos)
+- Verifying Deployment & TrustyAI Stability
+- Cleanup & Troubleshooting
+- Q&A
+
+## What is RHOAI?
+
+- **Red Hat OpenShift AI** — ML/AI platform on OpenShift
+- Components: Dashboard, KServe, TrustyAI, Model Registry, Workbenches
+- Managed via **DataScienceCluster (DSC)** custom resource
+- Operators installed and managed through **OLM**
+
+## What is OLM & Why Nightly Builds?
+
+- **OLM** = Operator Lifecycle Manager
+- Manages operator installs, upgrades, and dependencies on OpenShift
+- **Nightly builds**: test latest features before GA release
+- CatalogSource points to dev image: `quay.io/rhoai/rhoai-fbc-fragment`
+
+## Prerequisites
+
+- OpenShift cluster with **cluster-admin** access
+- `oc` CLI installed and logged in
+- Clone the install repo:
+
+```bash
+git clone <olminstall-repo>
+cd olminstall
+```
+
+- Nightly catalog image URL from the build system
+
+## Architecture Overview
+
+```
+┌─────────────────────────────────────────────────┐
+│              openshift-marketplace               │
+│  ┌─────────────────────────────────────────┐    │
+│  │  CatalogSource (rhoai-catalog-dev)      │    │
+│  └──────────────────┬──────────────────────┘    │
+└─────────────────────┼───────────────────────────┘
+                      ▼
+┌─────────────────────────────────────────────────┐
+│            redhat-ods-operator                   │
+│  Subscription → InstallPlan → CSV → Operator    │
+└──────────────────────┬──────────────────────────┘
+                       ▼
+┌─────────────────────────────────────────────────┐
+│          redhat-ods-applications                 │
+│  DataScienceCluster → Components                │
+│  (Dashboard, KServe, TrustyAI, ModelRegistry)   │
+└─────────────────────────────────────────────────┘
+```
+
+## Step 1 — Cluster Login & Verification
+
+```bash
+oc login --token=<token> --server=<api-url>
+oc whoami
+oc version
+```
+
+<!-- Uncomment when demo video is ready:
+{{< video demos/01-cluster-login.mp4 >}}
+-->
+
+## Step 2 — Configure CatalogSource
+
+```bash
+./setup.sh -t operator -i quay.io/rhoai/rhoai-fbc-fragment:latest
+```
+
+**What this does:**
+
+- Creates `redhat-ods-operator` namespace
+- Applies CatalogSource to `openshift-marketplace`
+- Applies OperatorGroup and Subscription
+
+<!-- {{< video demos/02-catalogsource.mp4 >}} -->
+
+## Step 2 — CatalogSource in Web Console
+
+**Navigate to:**
+
+- Administration → Cluster Settings → OperatorHub
+- Verify `rhoai-catalog-dev` source is active
+
+<!-- {{< video demos/03-catalogsource-console.mp4 >}} -->
+
+## Step 3 — Install Dependencies
+
+```bash
+./setup-dependencies.sh
+
+# OR individually:
+./install-operator.sh cert-manager-operator
+./install-operator.sh servicemeshoperator3
+./install-operator.sh serverless-operator
+./install-operator.sh rhcl-operator
+./install-operator.sh kueue-operator
+```
+
+<!-- {{< video demos/04-dependencies.mp4 >}} -->
+
+## Step 3 — Dependencies Overview
+
+| Operator | Namespace | Purpose |
+|----------|-----------|---------|
+| cert-manager | cert-manager-operator | TLS certificates |
+| ServiceMesh v3 | openshift-operators | Service mesh / Istio |
+| Serverless | openshift-serverless | KNative / KServe |
+| RHCL (Kuadrant) | kuadrant-system | Auth (Authorino), Gateway |
+| Kueue | openshift-kueue-operator | Job queueing |
+| JobSet | openshift-jobset-operator | Batch workloads |
+| Leader Worker Set | openshift-lws-operator | Distributed training |
+
+## Step 4 — Install RHOAI Operator
+
+```bash
+./install-operator.sh rhods-operator
+```
+
+**What happens:**
+
+1. Creates Subscription (Manual approval)
+2. Finds and approves InstallPlan
+3. Waits for CSV to reach `Succeeded`
+
+<!-- {{< video demos/05-operator-install.mp4 >}} -->
+
+## Step 4 — Operator in Web Console
+
+**Navigate to:**
+
+- Operators → Installed Operators
+- Namespace: `redhat-ods-operator`
+- Verify CSV status: **Succeeded**
+
+<!-- {{< video demos/06-operator-console.mp4 >}} -->
+
+## Step 5 — Create DataScienceCluster
+
+```bash
+./create-dsc.sh
+```
+
+**What happens:**
+
+1. Extracts default DSC from CSV annotation
+2. Applies DSC to the cluster
+3. Waits for DSC to reach **Ready** phase
+4. Waits for all pods in `redhat-ods-applications`
+
+<!-- {{< video demos/07-create-dsc.mp4 >}} -->
+
+## Step 5 — DSC Components
+
+Each component has a `managementState`:
+
+- **Managed** — Operator deploys and manages it
+- **Removed** — Not installed
+
+Key components:
+
+- Dashboard, KServe, ModelMeshServing
+- **TrustyAI**, Ray, Kueue
+- ModelRegistry, Workbenches
+- CodeFlare, DataSciencePipelines
+
+## Step 6 — Verify Pods (Terminal)
+
+```bash
+# All pods should be Running/Completed
+oc get pods -n redhat-ods-applications
+
+# DSC status
+oc get datasciencecluster -A
+
+# DSCI status
+oc get dsci -A
+```
+
+<!-- {{< video demos/08-pods-terminal.mp4 >}} -->
+
+## Step 6 — Verify Pods (Web Console)
+
+**Navigate to:**
+
+- Workloads → Pods
+- Namespace: `redhat-ods-applications`
+- All pods should be **Running** or **Completed**
+
+<!-- {{< video demos/09-pods-console.mp4 >}} -->
+
+## Step 7 — TrustyAI Verification
+
+```bash
+# Check TrustyAI component in DSC
+oc get datasciencecluster -o jsonpath='{.items[0].status.conditions}' | jq .
+
+# Verify TrustyAI CRDs exist
+oc get crd | grep trustyai
+
+# Check TrustyAI pods
+oc get pods -n redhat-ods-applications | grep trustyai
+```
+
+**TrustyAI is stable when:**
+
+- DSC shows component **Ready**
+- All TrustyAI pods are **Running**
+
+## Step 8 — Dashboard Access
+
+```bash
+./create-route.sh
+```
+
+- Creates an OpenShift Route for the RHOAI Dashboard
+- Access the dashboard via browser
+
+<!-- {{< video demos/10-dashboard.mp4 >}} -->
+
+## Installation Methods Comparison
+
+| Method | Command | Best For |
+|--------|---------|----------|
+| Self-managed | `setup.sh -t operator` | Dev/QE testing |
+| Addon/Managed | `setup.sh -t addon` | Simulating managed env |
+| Helm | `setup-helm.sh -o rhoai` | One-shot install |
+| GitOps deps | `setup-dependencies.sh` | CI/CD pipelines |
+
+## Cleanup & Reinstall
+
+```bash
+# Graceful cleanup
+./cleanup.sh -t operator -g
+
+# Complete cleanup with 19-point verification
+./complete-cleanup.sh
+```
+
+**Handles:**
+
+- Stuck namespaces and CRDs
+- Orphaned webhooks and operator resources
+- Dependency operators cleanup
+
+<!-- {{< video demos/11-cleanup.mp4 >}} -->
+
+## Common Issues & Troubleshooting
+
+| Problem | Solution |
+|---------|----------|
+| Pods stuck in `Pending` | Check node resources |
+| CSV not `Succeeded` | Check InstallPlan approval |
+| Namespace stuck `Terminating` | `./remove-stuck-crds.sh` |
+| CatalogSource not ready | Check image pull access |
+| TrustyAI pods not starting | Verify DSC component state |
+
+## Key Namespaces Reference
+
+| Namespace | Contains |
+|-----------|----------|
+| `redhat-ods-operator` | RHOAI operator |
+| `redhat-ods-applications` | All RHOAI components |
+| `redhat-ods-monitoring` | Monitoring stack |
+| `openshift-marketplace` | CatalogSources |
+| `kuadrant-system` | Authorino, Kuadrant |
+
+## Q&A
+
+**Resources:**
+
+- Install repo: `olminstall`
+- RHOAI documentation: `openshift-ai-documentation/`
+- Cleanup guide: `COMPLETE-CLEANUP-README.md`
+
+Thank you!
