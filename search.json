@@ -1,0 +1,163 @@
+[
+  {
+    "objectID": "index.html#agenda",
+    "href": "index.html#agenda",
+    "title": "Installing RHOAI Nightly Builds via OLM",
+    "section": "Agenda",
+    "text": "Agenda\n\nWhat is RHOAI & OLM?\nPrerequisites\nInstallation Walkthrough (with demos)\nVerifying Deployment & TrustyAI Stability\nCleanup & Troubleshooting\nQ&A"
+  },
+  {
+    "objectID": "index.html#what-is-rhoai",
+    "href": "index.html#what-is-rhoai",
+    "title": "Installing RHOAI Nightly Builds via OLM",
+    "section": "What is RHOAI?",
+    "text": "What is RHOAI?\n\nRed Hat OpenShift AI — ML/AI platform on OpenShift\nComponents: Dashboard, KServe, TrustyAI, Model Registry, Workbenches\nManaged via DataScienceCluster (DSC) custom resource\nOperators installed and managed through OLM"
+  },
+  {
+    "objectID": "index.html#what-is-olm-why-nightly-builds",
+    "href": "index.html#what-is-olm-why-nightly-builds",
+    "title": "Installing RHOAI Nightly Builds via OLM",
+    "section": "What is OLM & Why Nightly Builds?",
+    "text": "What is OLM & Why Nightly Builds?\n\nOLM = Operator Lifecycle Manager\nManages operator installs, upgrades, and dependencies on OpenShift\nNightly builds: test latest features before GA release\nCatalogSource points to dev image: quay.io/rhoai/rhoai-fbc-fragment"
+  },
+  {
+    "objectID": "index.html#prerequisites",
+    "href": "index.html#prerequisites",
+    "title": "Installing RHOAI Nightly Builds via OLM",
+    "section": "Prerequisites",
+    "text": "Prerequisites\n\nOpenShift cluster with cluster-admin access\noc CLI installed and logged in\nClone the install repo:\n\ngit clone &lt;olminstall-repo&gt;\ncd olminstall\n\nNightly catalog image URL from the build system"
+  },
+  {
+    "objectID": "index.html#architecture-overview",
+    "href": "index.html#architecture-overview",
+    "title": "Installing RHOAI Nightly Builds via OLM",
+    "section": "Architecture Overview",
+    "text": "Architecture Overview\n┌─────────────────────────────────────────────────┐\n│              openshift-marketplace               │\n│  ┌─────────────────────────────────────────┐    │\n│  │  CatalogSource (rhoai-catalog-dev)      │    │\n│  └──────────────────┬──────────────────────┘    │\n└─────────────────────┼───────────────────────────┘\n                      ▼\n┌─────────────────────────────────────────────────┐\n│            redhat-ods-operator                   │\n│  Subscription → InstallPlan → CSV → Operator    │\n└──────────────────────┬──────────────────────────┘\n                       ▼\n┌─────────────────────────────────────────────────┐\n│          redhat-ods-applications                 │\n│  DataScienceCluster → Components                │\n│  (Dashboard, KServe, TrustyAI, ModelRegistry)   │\n└─────────────────────────────────────────────────┘"
+  },
+  {
+    "objectID": "index.html#step-1-cluster-login-verification",
+    "href": "index.html#step-1-cluster-login-verification",
+    "title": "Installing RHOAI Nightly Builds via OLM",
+    "section": "Step 1 — Cluster Login & Verification",
+    "text": "Step 1 — Cluster Login & Verification\noc login --token=&lt;token&gt; --server=&lt;api-url&gt;\noc whoami\noc version"
+  },
+  {
+    "objectID": "index.html#step-2-configure-catalogsource",
+    "href": "index.html#step-2-configure-catalogsource",
+    "title": "Installing RHOAI Nightly Builds via OLM",
+    "section": "Step 2 — Configure CatalogSource",
+    "text": "Step 2 — Configure CatalogSource\n./setup.sh -t operator -i quay.io/rhoai/rhoai-fbc-fragment:latest\nWhat this does:\n\nCreates redhat-ods-operator namespace\nApplies CatalogSource to openshift-marketplace\nApplies OperatorGroup and Subscription"
+  },
+  {
+    "objectID": "index.html#step-2-catalogsource-in-web-console",
+    "href": "index.html#step-2-catalogsource-in-web-console",
+    "title": "Installing RHOAI Nightly Builds via OLM",
+    "section": "Step 2 — CatalogSource in Web Console",
+    "text": "Step 2 — CatalogSource in Web Console\nNavigate to:\n\nAdministration → Cluster Settings → OperatorHub\nVerify rhoai-catalog-dev source is active"
+  },
+  {
+    "objectID": "index.html#step-3-install-dependencies",
+    "href": "index.html#step-3-install-dependencies",
+    "title": "Installing RHOAI Nightly Builds via OLM",
+    "section": "Step 3 — Install Dependencies",
+    "text": "Step 3 — Install Dependencies\n./setup-dependencies.sh\n\n# OR individually:\n./install-operator.sh cert-manager-operator\n./install-operator.sh servicemeshoperator3\n./install-operator.sh serverless-operator\n./install-operator.sh rhcl-operator\n./install-operator.sh kueue-operator"
+  },
+  {
+    "objectID": "index.html#step-3-dependencies-overview",
+    "href": "index.html#step-3-dependencies-overview",
+    "title": "Installing RHOAI Nightly Builds via OLM",
+    "section": "Step 3 — Dependencies Overview",
+    "text": "Step 3 — Dependencies Overview\n\n\n\nOperator\nNamespace\nPurpose\n\n\n\n\ncert-manager\ncert-manager-operator\nTLS certificates\n\n\nServiceMesh v3\nopenshift-operators\nService mesh / Istio\n\n\nServerless\nopenshift-serverless\nKNative / KServe\n\n\nRHCL (Kuadrant)\nkuadrant-system\nAuth (Authorino), Gateway\n\n\nKueue\nopenshift-kueue-operator\nJob queueing\n\n\nJobSet\nopenshift-jobset-operator\nBatch workloads\n\n\nLeader Worker Set\nopenshift-lws-operator\nDistributed training"
+  },
+  {
+    "objectID": "index.html#step-4-install-rhoai-operator",
+    "href": "index.html#step-4-install-rhoai-operator",
+    "title": "Installing RHOAI Nightly Builds via OLM",
+    "section": "Step 4 — Install RHOAI Operator",
+    "text": "Step 4 — Install RHOAI Operator\n./install-operator.sh rhods-operator\nWhat happens:\n\nCreates Subscription (Manual approval)\nFinds and approves InstallPlan\nWaits for CSV to reach Succeeded"
+  },
+  {
+    "objectID": "index.html#step-4-operator-in-web-console",
+    "href": "index.html#step-4-operator-in-web-console",
+    "title": "Installing RHOAI Nightly Builds via OLM",
+    "section": "Step 4 — Operator in Web Console",
+    "text": "Step 4 — Operator in Web Console\nNavigate to:\n\nOperators → Installed Operators\nNamespace: redhat-ods-operator\nVerify CSV status: Succeeded"
+  },
+  {
+    "objectID": "index.html#step-5-create-datasciencecluster",
+    "href": "index.html#step-5-create-datasciencecluster",
+    "title": "Installing RHOAI Nightly Builds via OLM",
+    "section": "Step 5 — Create DataScienceCluster",
+    "text": "Step 5 — Create DataScienceCluster\n./create-dsc.sh\nWhat happens:\n\nExtracts default DSC from CSV annotation\nApplies DSC to the cluster\nWaits for DSC to reach Ready phase\nWaits for all pods in redhat-ods-applications"
+  },
+  {
+    "objectID": "index.html#step-5-dsc-components",
+    "href": "index.html#step-5-dsc-components",
+    "title": "Installing RHOAI Nightly Builds via OLM",
+    "section": "Step 5 — DSC Components",
+    "text": "Step 5 — DSC Components\nEach component has a managementState:\n\nManaged — Operator deploys and manages it\nRemoved — Not installed\n\nKey components:\n\nDashboard, KServe, ModelMeshServing\nTrustyAI, Ray, Kueue\nModelRegistry, Workbenches\nCodeFlare, DataSciencePipelines"
+  },
+  {
+    "objectID": "index.html#step-6-verify-pods-terminal",
+    "href": "index.html#step-6-verify-pods-terminal",
+    "title": "Installing RHOAI Nightly Builds via OLM",
+    "section": "Step 6 — Verify Pods (Terminal)",
+    "text": "Step 6 — Verify Pods (Terminal)\n# All pods should be Running/Completed\noc get pods -n redhat-ods-applications\n\n# DSC status\noc get datasciencecluster -A\n\n# DSCI status\noc get dsci -A"
+  },
+  {
+    "objectID": "index.html#step-6-verify-pods-web-console",
+    "href": "index.html#step-6-verify-pods-web-console",
+    "title": "Installing RHOAI Nightly Builds via OLM",
+    "section": "Step 6 — Verify Pods (Web Console)",
+    "text": "Step 6 — Verify Pods (Web Console)\nNavigate to:\n\nWorkloads → Pods\nNamespace: redhat-ods-applications\nAll pods should be Running or Completed"
+  },
+  {
+    "objectID": "index.html#step-7-trustyai-verification",
+    "href": "index.html#step-7-trustyai-verification",
+    "title": "Installing RHOAI Nightly Builds via OLM",
+    "section": "Step 7 — TrustyAI Verification",
+    "text": "Step 7 — TrustyAI Verification\n# Check TrustyAI component in DSC\noc get datasciencecluster -o jsonpath='{.items[0].status.conditions}' | jq .\n\n# Verify TrustyAI CRDs exist\noc get crd | grep trustyai\n\n# Check TrustyAI pods\noc get pods -n redhat-ods-applications | grep trustyai\nTrustyAI is stable when:\n\nDSC shows component Ready\nAll TrustyAI pods are Running"
+  },
+  {
+    "objectID": "index.html#step-8-dashboard-access",
+    "href": "index.html#step-8-dashboard-access",
+    "title": "Installing RHOAI Nightly Builds via OLM",
+    "section": "Step 8 — Dashboard Access",
+    "text": "Step 8 — Dashboard Access\n./create-route.sh\n\nCreates an OpenShift Route for the RHOAI Dashboard\nAccess the dashboard via browser"
+  },
+  {
+    "objectID": "index.html#installation-methods-comparison",
+    "href": "index.html#installation-methods-comparison",
+    "title": "Installing RHOAI Nightly Builds via OLM",
+    "section": "Installation Methods Comparison",
+    "text": "Installation Methods Comparison\n\n\n\nMethod\nCommand\nBest For\n\n\n\n\nSelf-managed\nsetup.sh -t operator\nDev/QE testing\n\n\nAddon/Managed\nsetup.sh -t addon\nSimulating managed env\n\n\nHelm\nsetup-helm.sh -o rhoai\nOne-shot install\n\n\nGitOps deps\nsetup-dependencies.sh\nCI/CD pipelines"
+  },
+  {
+    "objectID": "index.html#cleanup-reinstall",
+    "href": "index.html#cleanup-reinstall",
+    "title": "Installing RHOAI Nightly Builds via OLM",
+    "section": "Cleanup & Reinstall",
+    "text": "Cleanup & Reinstall\n# Graceful cleanup\n./cleanup.sh -t operator -g\n\n# Complete cleanup with 19-point verification\n./complete-cleanup.sh\nHandles:\n\nStuck namespaces and CRDs\nOrphaned webhooks and operator resources\nDependency operators cleanup"
+  },
+  {
+    "objectID": "index.html#common-issues-troubleshooting",
+    "href": "index.html#common-issues-troubleshooting",
+    "title": "Installing RHOAI Nightly Builds via OLM",
+    "section": "Common Issues & Troubleshooting",
+    "text": "Common Issues & Troubleshooting\n\n\n\nProblem\nSolution\n\n\n\n\nPods stuck in Pending\nCheck node resources\n\n\nCSV not Succeeded\nCheck InstallPlan approval\n\n\nNamespace stuck Terminating\n./remove-stuck-crds.sh\n\n\nCatalogSource not ready\nCheck image pull access\n\n\nTrustyAI pods not starting\nVerify DSC component state"
+  },
+  {
+    "objectID": "index.html#key-namespaces-reference",
+    "href": "index.html#key-namespaces-reference",
+    "title": "Installing RHOAI Nightly Builds via OLM",
+    "section": "Key Namespaces Reference",
+    "text": "Key Namespaces Reference\n\n\n\nNamespace\nContains\n\n\n\n\nredhat-ods-operator\nRHOAI operator\n\n\nredhat-ods-applications\nAll RHOAI components\n\n\nredhat-ods-monitoring\nMonitoring stack\n\n\nopenshift-marketplace\nCatalogSources\n\n\nkuadrant-system\nAuthorino, Kuadrant"
+  },
+  {
+    "objectID": "index.html#qa",
+    "href": "index.html#qa",
+    "title": "Installing RHOAI Nightly Builds via OLM",
+    "section": "Q&A",
+    "text": "Q&A\nResources:\n\nInstall repo: olminstall\nRHOAI documentation: openshift-ai-documentation/\nCleanup guide: COMPLETE-CLEANUP-README.md\n\nThank you!"
+  }
+]
