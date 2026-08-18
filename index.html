@@ -104,6 +104,7 @@
     code span.wa { color: #dcc6e0; } /* Warning */
   </style>
   <link rel="stylesheet" href="site_libs/revealjs/dist/theme/quarto-4df01d85d5cf19cc6202400f4f043f84.css">
+  <link rel="stylesheet" href="styles.css">
   <link href="site_libs/revealjs/plugin/quarto-line-highlight/line-highlight.css" rel="stylesheet">
   <link href="site_libs/revealjs/plugin/reveal-menu/menu.css" rel="stylesheet">
   <link href="site_libs/revealjs/plugin/reveal-menu/quarto-menu.css" rel="stylesheet">
@@ -216,11 +217,11 @@ Karishma Punwatkar
 <section id="agenda" class="slide level2">
 <h2>Agenda</h2>
 <ul>
-<li>What is RHOAI &amp; OLM?</li>
+<li>What is RHOAI &amp; Why Nightly Builds?</li>
 <li>Prerequisites</li>
 <li>Installation Walkthrough (with demos)</li>
 <li>Verifying Deployment &amp; TrustyAI Stability</li>
-<li>Cleanup &amp; Troubleshooting</li>
+<li>Cleanup</li>
 <li>Q&amp;A</li>
 </ul>
 </section>
@@ -230,16 +231,15 @@ Karishma Punwatkar
 <li><strong>Red Hat OpenShift AI</strong> — ML/AI platform on OpenShift</li>
 <li>Components: Dashboard, KServe, TrustyAI, Model Registry, Workbenches</li>
 <li>Managed via <strong>DataScienceCluster (DSC)</strong> custom resource</li>
-<li>Operators installed and managed through <strong>OLM</strong></li>
+<li>Operators installed and managed through <strong>OLM</strong> (Operator Lifecycle Manager)</li>
 </ul>
 </section>
-<section id="what-is-olm-why-nightly-builds" class="slide level2">
-<h2>What is OLM &amp; Why Nightly Builds?</h2>
+<section id="why-nightly-builds" class="slide level2">
+<h2>Why Nightly Builds?</h2>
 <ul>
-<li><strong>OLM</strong> = Operator Lifecycle Manager</li>
-<li>Manages operator installs, upgrades, and dependencies on OpenShift</li>
-<li><strong>Nightly builds</strong>: test latest features before GA release</li>
-<li>CatalogSource points to dev image: <code>quay.io/rhoai/rhoai-fbc-fragment</code></li>
+<li>Test latest features <strong>before GA release</strong></li>
+<li>Validate changes early in the development cycle</li>
+<li>CatalogSource points to dev image: <code>quay.io/rhoai/rhoai-fbc-fragment:rhoai-&lt;release-version&gt;@sha256:&lt;digest&gt;</code></li>
 </ul>
 </section>
 <section id="prerequisites" class="slide level2">
@@ -249,7 +249,7 @@ Karishma Punwatkar
 <li><code>oc</code> CLI installed and logged in</li>
 <li>Clone the install repo:</li>
 </ul>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb1-1"><a aria-label="1"></a><span class="fu">git</span> clone <span class="op">&lt;</span>olminstall-repo<span class="op">&gt;</span></span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb1-1"><a aria-label="1"></a><span class="fu">git</span> clone https://gitlab.cee.redhat.com/data-hub/olminstall</span>
 <span id="cb1-2"><a aria-label="2"></a><span class="bu">cd</span> olminstall</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <ul>
 <li>Nightly catalog image URL from the build system</li>
@@ -275,242 +275,86 @@ Karishma Punwatkar
 │  (Dashboard, KServe, TrustyAI, ModelRegistry)   │
 └─────────────────────────────────────────────────┘</code></pre>
 </section>
-<section id="step-1-cluster-login-verification" class="slide level2">
-<h2>Step 1 — Cluster Login &amp; Verification</h2>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb3-1"><a aria-label="1"></a><span class="ex">oc</span> login <span class="at">--token</span><span class="op">=&lt;</span>token<span class="op">&gt;</span> --server=<span class="op">&lt;</span>api-url<span class="op">&gt;</span></span>
-<span id="cb3-2"><a aria-label="2"></a><span class="ex">oc</span> whoami</span>
-<span id="cb3-3"><a aria-label="3"></a><span class="ex">oc</span> version</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<!-- Uncomment when demo video is ready:
-
--->
+<section id="step-1-get-the-nightly-image" class="slide level2">
+<h2>Step 1 — Get the Nightly Image</h2>
+<p>The <code>rhoai-devops-bot</code> posts nightly build images to Slack channel <code>#rhoai-build-notifications</code>:</p>
+<p><strong>Slack Channel:</strong> <code>#rhoai-build-notifications</code></p>
+<p><strong>Bot Message:</strong></p>
+<blockquote>
+<p>A new Nightly Build is available for RHOAI v3.5.0</p>
+<p>Image: <code>quay.io/rhoai/rhoai-fbc-fragment:rhoai-&lt;release-version&gt;@sha256:&lt;digest&gt;</code></p>
+<p>Commit: <code>a921bd2</code></p>
+</blockquote>
+<p>Copy the <strong>Image</strong> URL for the next step.</p>
 </section>
-<section id="step-2-configure-catalogsource" class="slide level2">
-<h2>Step 2 — Configure CatalogSource</h2>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb4-1"><a aria-label="1"></a><span class="ex">./setup.sh</span> <span class="at">-t</span> operator <span class="at">-i</span> quay.io/rhoai/rhoai-fbc-fragment:latest</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p><strong>What this does:</strong></p>
-<ul>
-<li>Creates <code>redhat-ods-operator</code> namespace</li>
-<li>Applies CatalogSource to <code>openshift-marketplace</code></li>
-<li>Applies OperatorGroup and Subscription</li>
-</ul>
-<!--  -->
+<section id="step-1-configure-catalogsource" class="slide level2" style="font-size: 1.3em;">
+<h2>Step 1 — Configure CatalogSource</h2>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3" style="font-size: 1.2em;"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb3-1"><a aria-label="1"></a><span class="ex">./setup.sh</span> <span class="at">-t</span> operator <span class="at">-u</span> stable-<span class="op">&lt;</span>release-version<span class="op">&gt;</span> <span class="dt">\</span></span>
+<span id="cb3-2"><a aria-label="2"></a>  <span class="at">-i</span> quay.io/rhoai/rhoai-fbc-fragment:rhoai-<span class="op">&lt;</span>release-version<span class="op">&gt;</span>@sha256:<span class="op">&lt;</span>digest<span class="op">&gt;</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><strong>Output:</strong></p>
+<pre style="font-size: 1.1em;"><code>namespace/redhat-ods-operator created
+catalogsource.operators.coreos.com/rhoai-catalog-dev created
+operatorgroup.operators.coreos.com/rhoai-operator-dev created
+subscription.operators.coreos.com/rhoai-operator-dev created</code></pre>
 </section>
-<section id="step-2-catalogsource-in-web-console" class="slide level2">
-<h2>Step 2 — CatalogSource in Web Console</h2>
-<p><strong>Navigate to:</strong></p>
-<ul>
-<li>Administration → Cluster Settings → OperatorHub</li>
-<li>Verify <code>rhoai-catalog-dev</code> source is active</li>
-</ul>
-<!--  -->
-</section>
-<section id="step-3-install-dependencies" class="slide level2">
-<h2>Step 3 — Install Dependencies</h2>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb5-1"><a aria-label="1"></a><span class="ex">./setup-dependencies.sh</span></span>
-<span id="cb5-2"><a aria-label="2"></a></span>
-<span id="cb5-3"><a aria-label="3"></a><span class="co"># OR individually:</span></span>
-<span id="cb5-4"><a aria-label="4"></a><span class="ex">./install-operator.sh</span> cert-manager-operator</span>
-<span id="cb5-5"><a aria-label="5"></a><span class="ex">./install-operator.sh</span> servicemeshoperator3</span>
-<span id="cb5-6"><a aria-label="6"></a><span class="ex">./install-operator.sh</span> serverless-operator</span>
-<span id="cb5-7"><a aria-label="7"></a><span class="ex">./install-operator.sh</span> rhcl-operator</span>
-<span id="cb5-8"><a aria-label="8"></a><span class="ex">./install-operator.sh</span> kueue-operator</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<!--  -->
-</section>
-<section id="step-3-dependencies-overview" class="slide level2">
-<h2>Step 3 — Dependencies Overview</h2>
-<table class="caption-top">
-<thead>
-<tr class="header">
-<th>Operator</th>
-<th>Namespace</th>
-<th>Purpose</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td>cert-manager</td>
-<td>cert-manager-operator</td>
-<td>TLS certificates</td>
-</tr>
-<tr class="even">
-<td>ServiceMesh v3</td>
-<td>openshift-operators</td>
-<td>Service mesh / Istio</td>
-</tr>
-<tr class="odd">
-<td>Serverless</td>
-<td>openshift-serverless</td>
-<td>KNative / KServe</td>
-</tr>
-<tr class="even">
-<td>RHCL (Kuadrant)</td>
-<td>kuadrant-system</td>
-<td>Auth (Authorino), Gateway</td>
-</tr>
-<tr class="odd">
-<td>Kueue</td>
-<td>openshift-kueue-operator</td>
-<td>Job queueing</td>
-</tr>
-<tr class="even">
-<td>JobSet</td>
-<td>openshift-jobset-operator</td>
-<td>Batch workloads</td>
-</tr>
-<tr class="odd">
-<td>Leader Worker Set</td>
-<td>openshift-lws-operator</td>
-<td>Distributed training</td>
-</tr>
-</tbody>
-</table>
-</section>
-<section id="step-4-install-rhoai-operator" class="slide level2">
-<h2>Step 4 — Install RHOAI Operator</h2>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb6-1"><a aria-label="1"></a><span class="ex">./install-operator.sh</span> rhods-operator</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p><strong>What happens:</strong></p>
-<ol type="1">
-<li>Creates Subscription (Manual approval)</li>
-<li>Finds and approves InstallPlan</li>
-<li>Waits for CSV to reach <code>Succeeded</code></li>
-</ol>
-<!--  -->
-</section>
-<section id="step-4-operator-in-web-console" class="slide level2">
-<h2>Step 4 — Operator in Web Console</h2>
+<section id="step-1-verify-operator-in-web-console" class="slide level2">
+<h2>Step 1 — Verify Operator in Web Console</h2>
 <p><strong>Navigate to:</strong></p>
 <ul>
 <li>Operators → Installed Operators</li>
 <li>Namespace: <code>redhat-ods-operator</code></li>
 <li>Verify CSV status: <strong>Succeeded</strong></li>
 </ul>
+</section>
+<section id="step-1-web-console-demo" class="slide level2">
+<h2>Step 1 — Web Console Demo</h2>
+<video id="video_shortcode_videojs_video1" class="video-js vjs-default-skin vjs-big-play-centered vjs-fluid" controls="" preload="auto" data-setup="{}" title=""><source src="demos/02-operator-console.mp4"></video>
+</section>
+<section id="step-2-create-datasciencecluster-verify" class="slide level2">
+<h2>Step 2 — Create DataScienceCluster &amp; Verify</h2>
+<ul>
+<li>Create DSC via <strong>Web Console</strong>: Operators → Installed Operators → RHOAI → Data Science Cluster → Create</li>
+<li>Or via CLI: <code>./create-dsc.sh</code></li>
+</ul>
+<p>Once created, verify:</p>
+<ul>
+<li>DSC reaches <strong>Ready</strong> phase</li>
+<li>All pods in <code>redhat-ods-applications</code> are <strong>Running/Completed</strong></li>
+</ul>
+
+<img data-src="images/dsc-ready-console.png" class="r-stretch quarto-figure quarto-figure-center"></section>
+<section id="step-3-verify-trustyai" class="slide level2">
+<h2>Step 3 — Verify TrustyAI</h2>
+
+<img data-src="images/trustyai-verify-terminal.png" class="r-stretch quarto-figure quarto-figure-center"><p><strong>TrustyAI is stable when:</strong> <code>TrustyAIReady: True</code>, CRDs exist, and pod is <strong>Running</strong></p>
+</section>
+<section id="trustyai-verification-commands" class="slide level2">
+<h2>TrustyAI Verification Commands</h2>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb5-1"><a aria-label="1"></a><span class="co"># Check DSC component conditions</span></span>
+<span id="cb5-2"><a aria-label="2"></a><span class="ex">oc</span> get datasciencecluster <span class="at">-o</span> jsonpath=<span class="st">'{.items[0].status.conditions}'</span> <span class="kw">|</span> <span class="ex">jq</span> .</span>
+<span id="cb5-3"><a aria-label="3"></a></span>
+<span id="cb5-4"><a aria-label="4"></a><span class="co"># Verify TrustyAI CRDs are installed</span></span>
+<span id="cb5-5"><a aria-label="5"></a><span class="ex">oc</span> get crd <span class="kw">|</span> <span class="fu">grep</span> trustyai</span>
+<span id="cb5-6"><a aria-label="6"></a></span>
+<span id="cb5-7"><a aria-label="7"></a><span class="co"># Check TrustyAI operator pod is running</span></span>
+<span id="cb5-8"><a aria-label="8"></a><span class="ex">oc</span> get pods <span class="at">-n</span> redhat-ods-applications <span class="kw">|</span> <span class="fu">grep</span> trustyai</span>
+<span id="cb5-9"><a aria-label="9"></a></span>
+<span id="cb5-10"><a aria-label="10"></a><span class="co"># Check DSC and DSCI status</span></span>
+<span id="cb5-11"><a aria-label="11"></a><span class="ex">oc</span> get datasciencecluster <span class="at">-A</span></span>
+<span id="cb5-12"><a aria-label="12"></a><span class="ex">oc</span> get dsci <span class="at">-A</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+<section id="cleanup" class="slide level2">
+<h2>Cleanup</h2>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb6-1"><a aria-label="1"></a><span class="co"># Graceful cleanup</span></span>
+<span id="cb6-2"><a aria-label="2"></a><span class="ex">./cleanup.sh</span> <span class="at">-t</span> operator <span class="at">-g</span></span>
+<span id="cb6-3"><a aria-label="3"></a></span>
+<span id="cb6-4"><a aria-label="4"></a><span class="co"># Complete cleanup with 19-point verification</span></span>
+<span id="cb6-5"><a aria-label="5"></a><span class="ex">./complete-cleanup.sh</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><strong>Handles:</strong> stuck namespaces, CRDs, orphaned webhooks, operator resources</p>
 <!--  -->
 </section>
-<section id="step-5-create-datasciencecluster" class="slide level2">
-<h2>Step 5 — Create DataScienceCluster</h2>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb7-1"><a aria-label="1"></a><span class="ex">./create-dsc.sh</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p><strong>What happens:</strong></p>
-<ol type="1">
-<li>Extracts default DSC from CSV annotation</li>
-<li>Applies DSC to the cluster</li>
-<li>Waits for DSC to reach <strong>Ready</strong> phase</li>
-<li>Waits for all pods in <code>redhat-ods-applications</code></li>
-</ol>
-<!--  -->
-</section>
-<section id="step-5-dsc-components" class="slide level2">
-<h2>Step 5 — DSC Components</h2>
-<p>Each component has a <code>managementState</code>:</p>
-<ul>
-<li><strong>Managed</strong> — Operator deploys and manages it</li>
-<li><strong>Removed</strong> — Not installed</li>
-</ul>
-<p>Key components:</p>
-<ul>
-<li>Dashboard, KServe, ModelMeshServing</li>
-<li><strong>TrustyAI</strong>, Ray, Kueue</li>
-<li>ModelRegistry, Workbenches</li>
-<li>CodeFlare, DataSciencePipelines</li>
-</ul>
-</section>
-<section id="step-6-verify-pods-terminal" class="slide level2">
-<h2>Step 6 — Verify Pods (Terminal)</h2>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb8"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb8-1"><a aria-label="1"></a><span class="co"># All pods should be Running/Completed</span></span>
-<span id="cb8-2"><a aria-label="2"></a><span class="ex">oc</span> get pods <span class="at">-n</span> redhat-ods-applications</span>
-<span id="cb8-3"><a aria-label="3"></a></span>
-<span id="cb8-4"><a aria-label="4"></a><span class="co"># DSC status</span></span>
-<span id="cb8-5"><a aria-label="5"></a><span class="ex">oc</span> get datasciencecluster <span class="at">-A</span></span>
-<span id="cb8-6"><a aria-label="6"></a></span>
-<span id="cb8-7"><a aria-label="7"></a><span class="co"># DSCI status</span></span>
-<span id="cb8-8"><a aria-label="8"></a><span class="ex">oc</span> get dsci <span class="at">-A</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<!--  -->
-</section>
-<section id="step-6-verify-pods-web-console" class="slide level2">
-<h2>Step 6 — Verify Pods (Web Console)</h2>
-<p><strong>Navigate to:</strong></p>
-<ul>
-<li>Workloads → Pods</li>
-<li>Namespace: <code>redhat-ods-applications</code></li>
-<li>All pods should be <strong>Running</strong> or <strong>Completed</strong></li>
-</ul>
-<!--  -->
-</section>
-<section id="step-7-trustyai-verification" class="slide level2">
-<h2>Step 7 — TrustyAI Verification</h2>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb9"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb9-1"><a aria-label="1"></a><span class="co"># Check TrustyAI component in DSC</span></span>
-<span id="cb9-2"><a aria-label="2"></a><span class="ex">oc</span> get datasciencecluster <span class="at">-o</span> jsonpath=<span class="st">'{.items[0].status.conditions}'</span> <span class="kw">|</span> <span class="ex">jq</span> .</span>
-<span id="cb9-3"><a aria-label="3"></a></span>
-<span id="cb9-4"><a aria-label="4"></a><span class="co"># Verify TrustyAI CRDs exist</span></span>
-<span id="cb9-5"><a aria-label="5"></a><span class="ex">oc</span> get crd <span class="kw">|</span> <span class="fu">grep</span> trustyai</span>
-<span id="cb9-6"><a aria-label="6"></a></span>
-<span id="cb9-7"><a aria-label="7"></a><span class="co"># Check TrustyAI pods</span></span>
-<span id="cb9-8"><a aria-label="8"></a><span class="ex">oc</span> get pods <span class="at">-n</span> redhat-ods-applications <span class="kw">|</span> <span class="fu">grep</span> trustyai</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p><strong>TrustyAI is stable when:</strong></p>
-<ul>
-<li>DSC shows component <strong>Ready</strong></li>
-<li>All TrustyAI pods are <strong>Running</strong></li>
-</ul>
-</section>
-<section id="step-8-dashboard-access" class="slide level2">
-<h2>Step 8 — Dashboard Access</h2>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb10"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb10-1"><a aria-label="1"></a><span class="ex">./create-route.sh</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<ul>
-<li>Creates an OpenShift Route for the RHOAI Dashboard</li>
-<li>Access the dashboard via browser</li>
-</ul>
-<!--  -->
-</section>
-<section id="installation-methods-comparison" class="slide level2">
-<h2>Installation Methods Comparison</h2>
-<table class="caption-top">
-<thead>
-<tr class="header">
-<th>Method</th>
-<th>Command</th>
-<th>Best For</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td>Self-managed</td>
-<td><code>setup.sh -t operator</code></td>
-<td>Dev/QE testing</td>
-</tr>
-<tr class="even">
-<td>Addon/Managed</td>
-<td><code>setup.sh -t addon</code></td>
-<td>Simulating managed env</td>
-</tr>
-<tr class="odd">
-<td>Helm</td>
-<td><code>setup-helm.sh -o rhoai</code></td>
-<td>One-shot install</td>
-</tr>
-<tr class="even">
-<td>GitOps deps</td>
-<td><code>setup-dependencies.sh</code></td>
-<td>CI/CD pipelines</td>
-</tr>
-</tbody>
-</table>
-</section>
-<section id="cleanup-reinstall" class="slide level2">
-<h2>Cleanup &amp; Reinstall</h2>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb11"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb11-1"><a aria-label="1"></a><span class="co"># Graceful cleanup</span></span>
-<span id="cb11-2"><a aria-label="2"></a><span class="ex">./cleanup.sh</span> <span class="at">-t</span> operator <span class="at">-g</span></span>
-<span id="cb11-3"><a aria-label="3"></a></span>
-<span id="cb11-4"><a aria-label="4"></a><span class="co"># Complete cleanup with 19-point verification</span></span>
-<span id="cb11-5"><a aria-label="5"></a><span class="ex">./complete-cleanup.sh</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p><strong>Handles:</strong></p>
-<ul>
-<li>Stuck namespaces and CRDs</li>
-<li>Orphaned webhooks and operator resources</li>
-<li>Dependency operators cleanup</li>
-</ul>
-<!--  -->
-</section>
-<section id="common-issues-troubleshooting" class="slide level2">
-<h2>Common Issues &amp; Troubleshooting</h2>
+<section id="common-issues" class="slide level2">
+<h2>Common Issues</h2>
 <table class="caption-top">
 <thead>
 <tr class="header">
@@ -535,52 +379,39 @@ Karishma Punwatkar
 <td>CatalogSource not ready</td>
 <td>Check image pull access</td>
 </tr>
-<tr class="odd">
-<td>TrustyAI pods not starting</td>
-<td>Verify DSC component state</td>
-</tr>
 </tbody>
 </table>
 </section>
-<section id="key-namespaces-reference" class="slide level2">
-<h2>Key Namespaces Reference</h2>
-<table class="caption-top">
-<thead>
-<tr class="header">
-<th>Namespace</th>
-<th>Contains</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td><code>redhat-ods-operator</code></td>
-<td>RHOAI operator</td>
-</tr>
-<tr class="even">
-<td><code>redhat-ods-applications</code></td>
-<td>All RHOAI components</td>
-</tr>
-<tr class="odd">
-<td><code>redhat-ods-monitoring</code></td>
-<td>Monitoring stack</td>
-</tr>
-<tr class="even">
-<td><code>openshift-marketplace</code></td>
-<td>CatalogSources</td>
-</tr>
-<tr class="odd">
-<td><code>kuadrant-system</code></td>
-<td>Authorino, Kuadrant</td>
-</tr>
-</tbody>
-</table>
+<section id="trustyai-dsc-stuck-in-deploymentsnotready" class="slide level2">
+<h2>TrustyAI: DSC Stuck in DeploymentsNotReady</h2>
+
+<img data-src="images/trustyai-not-ready.png" class="r-stretch quarto-figure quarto-figure-center"><p><strong>Symptom:</strong> DSC shows <code>DeploymentsNotReady</code> for TrustyAI even though pods are running</p>
+<p><strong>Root cause:</strong> Image pull secret or ServiceAccount gets regenerated, causing a transient pod failure. The pod self-heals, but <code>rhods-operator</code> never re-reconciles — so the DSC shows stale status.</p>
+<p><strong>Fix:</strong></p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb7-1"><a aria-label="1"></a><span class="ex">oc</span> annotate trustyai default-trustyai <span class="dt">\</span></span>
+<span id="cb7-2"><a aria-label="2"></a>  opendatahub.io/manual-reconcile=<span class="va">$(</span><span class="fu">date</span> +%s<span class="va">)</span> <span class="at">--overwrite</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>This forces a fresh reconcile → controller sees healthy deployment → flips <code>TrustyAIReady: True</code></p>
+</section>
+<section id="subscription-channel-mismatch" class="slide level2">
+<h2>Subscription Channel Mismatch</h2>
+<p><strong>Symptom:</strong> Subscription fails to resolve — no InstallPlan created, operator never installs</p>
+<p><strong>Root cause:</strong> The catalog image (e.g., a 3.6 EA build) doesn’t publish the channel you specified (e.g., <code>stable-3.6</code>). EA/nightly builds often only exist in the <code>beta</code> channel.</p>
+<p><strong>Fix:</strong></p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb8"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb8-1"><a aria-label="1"></a><span class="co"># Patch the subscription to the correct channel</span></span>
+<span id="cb8-2"><a aria-label="2"></a><span class="ex">oc</span> patch subscription rhoai-operator-dev <span class="at">-n</span> redhat-ods-operator <span class="dt">\</span></span>
+<span id="cb8-3"><a aria-label="3"></a>  <span class="at">--type</span> merge <span class="at">-p</span> <span class="st">'{"spec":{"channel":"beta"}}'</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><strong>Prevention:</strong> Use the correct <code>-u</code> flag when running setup:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb9"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb9-1"><a aria-label="1"></a><span class="co"># For EA/nightly builds, use beta channel</span></span>
+<span id="cb9-2"><a aria-label="2"></a><span class="ex">./setup.sh</span> <span class="at">-t</span> operator <span class="at">-u</span> beta <span class="at">-i</span> <span class="op">&lt;</span>image-url<span class="op">&gt;</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><strong>Check available channels before installing:</strong></p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb10"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb10-1"><a aria-label="1"></a><span class="ex">oc</span> get packagemanifest rhoai <span class="at">-n</span> openshift-marketplace <span class="dt">\</span></span>
+<span id="cb10-2"><a aria-label="2"></a>  <span class="at">-o</span> jsonpath=<span class="st">'{.status.channels[*].name}'</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
 <section id="qa" class="slide level2">
 <h2>Q&amp;A</h2>
 <p><strong>Resources:</strong></p>
 <ul>
 <li>Install repo: <code>olminstall</code></li>
-<li>RHOAI documentation: <code>openshift-ai-documentation/</code></li>
 <li>Cleanup guide: <code>COMPLETE-CLEANUP-README.md</code></li>
 </ul>
 <p>Thank you!</p>
@@ -768,9 +599,9 @@ Karishma Punwatkar
         // The "normal" size of the presentation, aspect ratio will be preserved
         // when the presentation is scaled to fit different resolutions. Can be
         // specified using percentage units.
-        width: 1280,
+        width: 1920,
 
-        height: 720,
+        height: 1080,
 
         // Factor of the display size that should remain empty around the content
         margin: 0.1,
@@ -872,7 +703,7 @@ Karishma Punwatkar
         }
           var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
           var mailtoRegex = new RegExp(/^mailto:/);
-            var filterRegex = new RegExp('/' + window.location.host + '/');
+            var filterRegex = new RegExp("https:\/\/kpunwatk\.github\.io\/rhoai-nightly-slides\/");
           var isInternal = (href) => {
               return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
           }
@@ -972,15 +803,6 @@ Karishma Punwatkar
       </script>
     <script>videojs(video_shortcode_videojs_video1);</script>
     <script>videojs(video_shortcode_videojs_video2);</script>
-    <script>videojs(video_shortcode_videojs_video3);</script>
-    <script>videojs(video_shortcode_videojs_video4);</script>
-    <script>videojs(video_shortcode_videojs_video5);</script>
-    <script>videojs(video_shortcode_videojs_video6);</script>
-    <script>videojs(video_shortcode_videojs_video7);</script>
-    <script>videojs(video_shortcode_videojs_video8);</script>
-    <script>videojs(video_shortcode_videojs_video9);</script>
-    <script>videojs(video_shortcode_videojs_video10);</script>
-    <script>videojs(video_shortcode_videojs_video11);</script>
     
 
 </body></html>
