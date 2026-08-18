@@ -1,0 +1,32 @@
+.red-box {
+  position: relative;
+  display: inline-block;
+}
+
+.red-box::after {
+  content: "";
+  position: absolute;
+  border: 3px solid red;
+  border-radius: 4px;
+}
+
+.highlight-channel::after {
+  top: 32%;
+  left: 1%;
+  width: 22%;
+  height: 18%;
+}
+
+.highlight-image-url::after {
+  top: 52%;
+  left: 8%;
+  width: 85%;
+  height: 14%;
+}
+
+.highlight-cmd::after {
+  top: 0%;
+  left: 0%;
+  width: 100%;
+  height: 18%;
+}
