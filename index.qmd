@@ -115,15 +115,11 @@ subscription.operators.coreos.com/rhoai-operator-dev created
 
 {{< video demos/02-operator-console.mp4 >}}
 
-## Step 2 — Create DataScienceCluster & Verify
+## Step 2 — Create DataScienceCluster & Verify {style="font-size: 0.9em;"}
 
 - Create DSC via **Web Console**: Operators → Installed Operators → RHOAI → Data Science Cluster → Create
 - Or via CLI: `./create-dsc.sh`
-
-Once created, verify:
-
-- DSC reaches **Ready** phase
-- All pods in `redhat-ods-applications` are **Running/Completed**
+- Verify: DSC reaches **Ready** phase, all pods in `redhat-ods-applications` are **Running/Completed**
 
 ![](images/dsc-ready-console.png){.r-stretch fig-align="center"}
 
@@ -218,11 +214,28 @@ oc get packagemanifest rhoai -n openshift-marketplace \
   -o jsonpath='{.status.channels[*].name}'
 ```
 
+## ROSA HCP: Pull Secret Workaround
+
+**Problem:** On ROSA-hosted clusters, the global pull-secret in `openshift-config` gets **immediately rewritten** back to original — you can't add registry credentials the normal way ([OCPBUGS-23901](https://issues.redhat.com/browse/OCPBUGS-23901))
+
+**Why it matters:** Installing nightly/RC builds requires pull access to `brew.registry.redhat.io` or `quay.io/rhoai` — without the pull secret, image pulls fail
+
+**Solution:** Use **Kyverno** to inject pull secrets into every pod:
+
+1. Create a secret `pull-secret-brew` in `openshift-config` with your registry credentials
+2. Deploy Kyverno to auto-sync the secret to **all namespaces**
+3. Kyverno policy adds the secret to every pod's `imagePullSecrets`
+
+**Steps:** [ROSA Pull Secret Workaround Doc](https://docs.google.com/document/d/12FoMt1_djxEkhuAsRjU40aIxnlo-0SATK-E4qihYQdQ)
+
+**Prerequisites:** `jq`, `yq`, and `~/.docker/config.json` with credentials for `brew.registry.redhat.io` and/or `quay.io`
+
 ## Q&A
 
 **Resources:**
 
-- Install repo: `olminstall`
+- Install repo: [gitlab.cee.redhat.com/data-hub/olminstall](https://gitlab.cee.redhat.com/data-hub/olminstall)
 - Cleanup guide: `COMPLETE-CLEANUP-README.md`
+- ROSA pull secret workaround: [Google Doc](https://docs.google.com/document/d/12FoMt1_djxEkhuAsRjU40aIxnlo-0SATK-E4qihYQdQ)
 
 Thank you!
