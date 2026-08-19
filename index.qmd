@@ -51,24 +51,24 @@ cd olminstall
 
 ## Architecture Overview
 
-```
-┌─────────────────────────────────────────────────┐
-│              openshift-marketplace               │
-│  ┌─────────────────────────────────────────┐    │
-│  │  CatalogSource (rhoai-catalog-dev)      │    │
-│  └──────────────────┬──────────────────────┘    │
-└─────────────────────┼───────────────────────────┘
-                      ▼
-┌─────────────────────────────────────────────────┐
-│            redhat-ods-operator                   │
-│  Subscription → InstallPlan → CSV → Operator    │
-└──────────────────────┬──────────────────────────┘
-                       ▼
-┌─────────────────────────────────────────────────┐
-│          redhat-ods-applications                 │
-│  DataScienceCluster → Components                │
-│  (Dashboard, KServe, TrustyAI, ModelRegistry)   │
-└─────────────────────────────────────────────────┘
+```{style="font-size: 0.8em; line-height: 1.2;"}
+┌───────────────────────────────────────┐
+│       openshift-marketplace           │
+│   CatalogSource (rhoai-catalog-dev)   │
+└───────────────────┬───────────────────┘
+                    ▼
+┌───────────────────────────────────────┐
+│       redhat-ods-operator             │
+│  Subscription → InstallPlan → CSV     │
+│              → Operator               │
+└───────────────────┬───────────────────┘
+                    ▼
+┌───────────────────────────────────────┐
+│     redhat-ods-applications           │
+│  DataScienceCluster → Components      │
+│  (Dashboard, KServe, TrustyAI,        │
+│   ModelRegistry, Workbenches)         │
+└───────────────────────────────────────┘
 ```
 
 ## Step 1 — Get the Nightly Image
@@ -87,16 +87,16 @@ The `rhoai-devops-bot` posts nightly build images to Slack channel `#rhoai-build
 
 Copy the **Image** URL for the next step.
 
-## Step 1 — Configure CatalogSource {style="font-size: 1.3em;"}
+## Step 1 — Configure CatalogSource
 
-```{.bash style="font-size: 1.2em;"}
+```bash
 ./setup.sh -t operator -u stable-<release-version> \
   -i quay.io/rhoai/rhoai-fbc-fragment:rhoai-<release-version>@sha256:<digest>
 ```
 
 **Output:**
 
-```{style="font-size: 1.1em;"}
+```{style="font-size: 0.75em;"}
 namespace/redhat-ods-operator created
 catalogsource.operators.coreos.com/rhoai-catalog-dev created
 operatorgroup.operators.coreos.com/rhoai-operator-dev created
@@ -135,7 +135,7 @@ Once created, verify:
 
 ## TrustyAI Verification Commands
 
-```bash
+```{.bash style="font-size: 1.0em;"}
 # Check DSC component conditions
 oc get datasciencecluster -o jsonpath='{.items[0].status.conditions}' | jq .
 
@@ -152,7 +152,7 @@ oc get dsci -A
 
 ## Cleanup
 
-```bash
+```{.bash style="font-size: 1.0em;"}
 # Graceful cleanup
 ./cleanup.sh -t operator -g
 
