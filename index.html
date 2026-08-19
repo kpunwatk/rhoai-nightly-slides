@@ -258,23 +258,23 @@ Karishma Punwatkar &amp; Shelton Cyril
 </section>
 <section id="architecture-overview" class="slide level2">
 <h2>Architecture Overview</h2>
-<pre><code>┌─────────────────────────────────────────────────┐
-│              openshift-marketplace               │
-│  ┌─────────────────────────────────────────┐    │
-│  │  CatalogSource (rhoai-catalog-dev)      │    │
-│  └──────────────────┬──────────────────────┘    │
-└─────────────────────┼───────────────────────────┘
-                      ▼
-┌─────────────────────────────────────────────────┐
-│            redhat-ods-operator                   │
-│  Subscription → InstallPlan → CSV → Operator    │
-└──────────────────────┬──────────────────────────┘
-                       ▼
-┌─────────────────────────────────────────────────┐
-│          redhat-ods-applications                 │
-│  DataScienceCluster → Components                │
-│  (Dashboard, KServe, TrustyAI, ModelRegistry)   │
-└─────────────────────────────────────────────────┘</code></pre>
+<pre style="font-size: 0.8em; line-height: 1.2;"><code>┌───────────────────────────────────────┐
+│       openshift-marketplace           │
+│   CatalogSource (rhoai-catalog-dev)   │
+└───────────────────┬───────────────────┘
+                    ▼
+┌───────────────────────────────────────┐
+│       redhat-ods-operator             │
+│  Subscription → InstallPlan → CSV     │
+│              → Operator               │
+└───────────────────┬───────────────────┘
+                    ▼
+┌───────────────────────────────────────┐
+│     redhat-ods-applications           │
+│  DataScienceCluster → Components      │
+│  (Dashboard, KServe, TrustyAI,        │
+│   ModelRegistry, Workbenches)         │
+└───────────────────────────────────────┘</code></pre>
 </section>
 <section id="step-1-get-the-nightly-image" class="slide level2">
 <h2>Step 1 — Get the Nightly Image</h2>
@@ -288,12 +288,12 @@ Karishma Punwatkar &amp; Shelton Cyril
 </blockquote>
 <p>Copy the <strong>Image</strong> URL for the next step.</p>
 </section>
-<section id="step-1-configure-catalogsource" class="slide level2" style="font-size: 1.3em;">
+<section id="step-1-configure-catalogsource" class="slide level2">
 <h2>Step 1 — Configure CatalogSource</h2>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3" style="font-size: 1.2em;"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb3-1"><a aria-label="1"></a><span class="ex">./setup.sh</span> <span class="at">-t</span> operator <span class="at">-u</span> stable-<span class="op">&lt;</span>release-version<span class="op">&gt;</span> <span class="dt">\</span></span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb3-1"><a aria-label="1"></a><span class="ex">./setup.sh</span> <span class="at">-t</span> operator <span class="at">-u</span> stable-<span class="op">&lt;</span>release-version<span class="op">&gt;</span> <span class="dt">\</span></span>
 <span id="cb3-2"><a aria-label="2"></a>  <span class="at">-i</span> quay.io/rhoai/rhoai-fbc-fragment:rhoai-<span class="op">&lt;</span>release-version<span class="op">&gt;</span>@sha256:<span class="op">&lt;</span>digest<span class="op">&gt;</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p><strong>Output:</strong></p>
-<pre style="font-size: 1.1em;"><code>namespace/redhat-ods-operator created
+<pre style="font-size: 0.75em;"><code>namespace/redhat-ods-operator created
 catalogsource.operators.coreos.com/rhoai-catalog-dev created
 operatorgroup.operators.coreos.com/rhoai-operator-dev created
 subscription.operators.coreos.com/rhoai-operator-dev created</code></pre>
@@ -331,7 +331,7 @@ subscription.operators.coreos.com/rhoai-operator-dev created</code></pre>
 </section>
 <section id="trustyai-verification-commands" class="slide level2">
 <h2>TrustyAI Verification Commands</h2>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb5-1"><a aria-label="1"></a><span class="co"># Check DSC component conditions</span></span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5" style="font-size: 1.0em;"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb5-1"><a aria-label="1"></a><span class="co"># Check DSC component conditions</span></span>
 <span id="cb5-2"><a aria-label="2"></a><span class="ex">oc</span> get datasciencecluster <span class="at">-o</span> jsonpath=<span class="st">'{.items[0].status.conditions}'</span> <span class="kw">|</span> <span class="ex">jq</span> .</span>
 <span id="cb5-3"><a aria-label="3"></a></span>
 <span id="cb5-4"><a aria-label="4"></a><span class="co"># Verify TrustyAI CRDs are installed</span></span>
@@ -346,7 +346,7 @@ subscription.operators.coreos.com/rhoai-operator-dev created</code></pre>
 </section>
 <section id="cleanup" class="slide level2">
 <h2>Cleanup</h2>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb6-1"><a aria-label="1"></a><span class="co"># Graceful cleanup</span></span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6" style="font-size: 1.0em;"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb6-1"><a aria-label="1"></a><span class="co"># Graceful cleanup</span></span>
 <span id="cb6-2"><a aria-label="2"></a><span class="ex">./cleanup.sh</span> <span class="at">-t</span> operator <span class="at">-g</span></span>
 <span id="cb6-3"><a aria-label="3"></a></span>
 <span id="cb6-4"><a aria-label="4"></a><span class="co"># Complete cleanup with 19-point verification</span></span>
