@@ -1,7 +1,7 @@
 ---
-title: "Installing RHOAI Nightly Builds via OLM"
-subtitle: "DDD Session"
-author: "Karishma Punwatkar"
+title: "Installing RHOAI Nightly Builds"
+subtitle: "Via OLM Manual Way & Through Claude Code Skills"
+author: "Karishma Punwatkar & Shelton Cyril"
 format:
   revealjs:
     theme: dark
@@ -17,8 +17,9 @@ format:
 
 - What is RHOAI & Why Nightly Builds?
 - Prerequisites
-- Installation Walkthrough (with demos)
+- Manual Installation via OLM (with demos)
 - Verifying Deployment & TrustyAI Stability
+- Automated Installation via Claude Code Skills
 - Cleanup
 - Q&A
 

@@ -2,5 +2,8 @@ project:
   type: website
   output-dir: _site
 
+execute:
+  enabled: false
+
 website:
   title: "RHOAI Nightly Installation"
