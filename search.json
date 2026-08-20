@@ -32,7 +32,7 @@
     "href": "index.html#architecture-overview",
     "title": "Installing RHOAI Nightly Builds",
     "section": "Architecture Overview",
-    "text": "Architecture Overview\n┌───────────────────────────────────────┐\n│       openshift-marketplace           │\n│   CatalogSource (rhoai-catalog-dev)   │\n└───────────────────┬───────────────────┘\n                    ▼\n┌───────────────────────────────────────┐\n│       redhat-ods-operator             │\n│  Subscription → InstallPlan → CSV     │\n│              → Operator               │\n└───────────────────┬───────────────────┘\n                    ▼\n┌───────────────────────────────────────┐\n│     redhat-ods-applications           │\n│  DataScienceCluster → Components      │\n│  (Dashboard, KServe, TrustyAI,        │\n│   ModelRegistry, Workbenches)         │\n└───────────────────────────────────────┘"
+    "text": "Architecture Overview\n\nopenshift-marketplaceCatalogSource (rhoai-catalog-dev)\n⬇\nredhat-ods-operatorSubscription → InstallPlan → CSV → Operator\n⬇\nredhat-ods-applicationsDataScienceCluster → Components(Dashboard, KServe, TrustyAI, ModelRegistry, Workbenches)"
   },
   {
     "objectID": "index.html#step-1-get-the-nightly-image",
@@ -102,21 +102,42 @@
     "href": "index.html#trustyai-dsc-stuck-in-deploymentsnotready",
     "title": "Installing RHOAI Nightly Builds",
     "section": "TrustyAI: DSC Stuck in DeploymentsNotReady",
-    "text": "TrustyAI: DSC Stuck in DeploymentsNotReady\n\nSymptom: DSC shows DeploymentsNotReady for TrustyAI even though pods are running\nRoot cause: Image pull secret or ServiceAccount gets regenerated, causing a transient pod failure. The pod self-heals, but rhods-operator never re-reconciles — so the DSC shows stale status.\nFix:\noc annotate trustyai default-trustyai \\\n  opendatahub.io/manual-reconcile=$(date +%s) --overwrite\nThis forces a fresh reconcile → controller sees healthy deployment → flips TrustyAIReady: True"
+    "text": "TrustyAI: DSC Stuck in DeploymentsNotReady"
+  },
+  {
+    "objectID": "index.html#trustyai-deploymentsnotready-cause-fix",
+    "href": "index.html#trustyai-deploymentsnotready-cause-fix",
+    "title": "Installing RHOAI Nightly Builds",
+    "section": "TrustyAI DeploymentsNotReady — Cause & Fix",
+    "text": "TrustyAI DeploymentsNotReady — Cause & Fix\nSymptom: DSC shows DeploymentsNotReady for TrustyAI even though pods are running\nRoot cause: Image pull secret or ServiceAccount gets regenerated, causing a transient pod failure. Pod self-heals, but rhods-operator never re-reconciles — DSC shows stale status.\nFix:\noc annotate trustyai default-trustyai \\\n  opendatahub.io/manual-reconcile=$(date +%s) --overwrite\nForces a fresh reconcile → controller sees healthy deployment → flips TrustyAIReady: True"
   },
   {
     "objectID": "index.html#subscription-channel-mismatch",
     "href": "index.html#subscription-channel-mismatch",
     "title": "Installing RHOAI Nightly Builds",
     "section": "Subscription Channel Mismatch",
-    "text": "Subscription Channel Mismatch\nSymptom: Subscription fails to resolve — no InstallPlan created, operator never installs\nRoot cause: The catalog image (e.g., a 3.6 EA build) doesn’t publish the channel you specified (e.g., stable-3.6). EA/nightly builds often only exist in the beta channel.\nFix:\n# Patch the subscription to the correct channel\noc patch subscription rhoai-operator-dev -n redhat-ods-operator \\\n  --type merge -p '{\"spec\":{\"channel\":\"beta\"}}'\nPrevention: Use the correct -u flag when running setup:\n# For EA/nightly builds, use beta channel\n./setup.sh -t operator -u beta -i &lt;image-url&gt;\nCheck available channels before installing:\noc get packagemanifest rhoai -n openshift-marketplace \\\n  -o jsonpath='{.status.channels[*].name}'"
+    "text": "Subscription Channel Mismatch\nSymptom: Subscription fails to resolve — no InstallPlan created, operator never installs\nRoot cause: The catalog image (e.g., a 3.6 EA build) doesn’t publish the channel you specified (e.g., stable-3.6). EA/nightly builds often only exist in the beta channel.\nFix:\n# Patch the subscription to the correct channel\noc patch subscription rhoai-operator-dev -n redhat-ods-operator \\\n  --type merge -p '{\"spec\":{\"channel\":\"beta\"}}'"
+  },
+  {
+    "objectID": "index.html#channel-mismatch-prevention",
+    "href": "index.html#channel-mismatch-prevention",
+    "title": "Installing RHOAI Nightly Builds",
+    "section": "Channel Mismatch — Prevention",
+    "text": "Channel Mismatch — Prevention\nUse the correct -u flag when running setup:\n# For EA/nightly builds, use beta channel\n./setup.sh -t operator -u beta -i &lt;image-url&gt;\nCheck available channels before installing:\noc get packagemanifest rhoai -n openshift-marketplace \\\n  -o jsonpath='{.status.channels[*].name}'"
   },
   {
     "objectID": "index.html#rosa-hcp-pull-secret-workaround",
     "href": "index.html#rosa-hcp-pull-secret-workaround",
     "title": "Installing RHOAI Nightly Builds",
     "section": "ROSA HCP: Pull Secret Workaround",
-    "text": "ROSA HCP: Pull Secret Workaround\nProblem: On ROSA-hosted clusters, the global pull-secret in openshift-config gets immediately rewritten back to original — you can’t add registry credentials the normal way (OCPBUGS-23901)\nWhy it matters: Installing nightly/RC builds requires pull access to brew.registry.redhat.io or quay.io/rhoai — without the pull secret, image pulls fail\nSolution: Use Kyverno to inject pull secrets into every pod:\n\nCreate a secret pull-secret-brew in openshift-config with your registry credentials\nDeploy Kyverno to auto-sync the secret to all namespaces\nKyverno policy adds the secret to every pod’s imagePullSecrets\n\nSteps: ROSA Pull Secret Workaround Doc\nPrerequisites: jq, yq, and ~/.docker/config.json with credentials for brew.registry.redhat.io and/or quay.io"
+    "text": "ROSA HCP: Pull Secret Workaround\nProblem: On ROSA-hosted clusters, the global pull-secret in openshift-config gets immediately rewritten back to original (OCPBUGS-23901)\nWhy it matters: Nightly builds require pull access to brew.registry.redhat.io or quay.io/rhoai — without the pull secret, image pulls fail\nSolution: Use Kyverno to inject pull secrets into every pod"
+  },
+  {
+    "objectID": "index.html#rosa-hcp-workaround-steps",
+    "href": "index.html#rosa-hcp-workaround-steps",
+    "title": "Installing RHOAI Nightly Builds",
+    "section": "ROSA HCP: Workaround Steps",
+    "text": "ROSA HCP: Workaround Steps\n\nCreate a secret pull-secret-brew in openshift-config with your registry credentials\nDeploy Kyverno to auto-sync the secret to all namespaces\nKyverno policy adds the secret to every pod’s imagePullSecrets\n\nPrerequisites: jq, yq, and ~/.docker/config.json with credentials\nFull steps: ROSA Pull Secret Workaround Doc"
   },
   {
     "objectID": "index.html#qa",
