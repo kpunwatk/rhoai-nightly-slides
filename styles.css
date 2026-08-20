@@ -22,3 +22,131 @@
 .reveal blockquote {
   font-size: 1.1em;
 }
+
+/* ── Animated title slide ── */
+#title-slide {
+  text-align: center;
+  overflow: hidden;
+}
+
+#title-slide .quarto-title-block {
+  position: relative;
+  z-index: 10;
+}
+
+#title-slide .title {
+  font-size: 2.6em;
+  font-weight: 700;
+  color: #ffffff;
+  text-shadow: 0 0 40px rgba(100, 180, 255, 0.25),
+               0 0 80px rgba(100, 180, 255, 0.1),
+               0 2px 10px rgba(0, 0, 0, 0.8);
+  letter-spacing: 0.02em;
+  margin-bottom: 0.3em;
+}
+
+#title-slide .subtitle {
+  font-size: 1.4em;
+  font-weight: 300;
+  color: #7eb8da;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.7);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-bottom: 1em;
+}
+
+#title-slide .author {
+  font-size: 1.15em;
+  color: #90a4ae;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
+  font-weight: 400;
+}
+
+/* Animated ambient glows */
+#title-slide .slide-background-content::before,
+#title-slide .slide-background-content::after {
+  content: "";
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(100px);
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+  animation-direction: alternate;
+}
+
+#title-slide .slide-background-content::before {
+  width: 600px;
+  height: 350px;
+  background: radial-gradient(ellipse, rgba(65, 145, 220, 0.35), transparent 70%);
+  top: 15%;
+  left: 10%;
+  animation: glow-drift-1 8s infinite alternate ease-in-out;
+}
+
+#title-slide .slide-background-content::after {
+  width: 500px;
+  height: 300px;
+  background: radial-gradient(ellipse, rgba(100, 200, 255, 0.2), transparent 70%);
+  bottom: 10%;
+  right: 10%;
+  animation: glow-drift-2 10s infinite alternate ease-in-out;
+}
+
+#title-slide::after {
+  content: "";
+  position: absolute;
+  width: 450px;
+  height: 250px;
+  border-radius: 50%;
+  filter: blur(120px);
+  background: radial-gradient(ellipse, rgba(150, 120, 255, 0.18), transparent 70%);
+  top: 30%;
+  left: 45%;
+  animation: glow-drift-3 12s infinite alternate ease-in-out;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Floating dot particles */
+#title-slide .slide-background-content {
+  background-image:
+    radial-gradient(1.5px 1.5px at 10% 20%, rgba(255,255,255,0.4) 50%, transparent 50%),
+    radial-gradient(1px 1px at 25% 55%, rgba(255,255,255,0.3) 50%, transparent 50%),
+    radial-gradient(2px 2px at 40% 15%, rgba(200,220,255,0.5) 50%, transparent 50%),
+    radial-gradient(1px 1px at 55% 70%, rgba(255,255,255,0.25) 50%, transparent 50%),
+    radial-gradient(1.5px 1.5px at 70% 35%, rgba(200,220,255,0.4) 50%, transparent 50%),
+    radial-gradient(1px 1px at 85% 60%, rgba(255,255,255,0.3) 50%, transparent 50%),
+    radial-gradient(2px 2px at 15% 80%, rgba(200,220,255,0.35) 50%, transparent 50%),
+    radial-gradient(1px 1px at 50% 45%, rgba(255,255,255,0.2) 50%, transparent 50%),
+    radial-gradient(1.5px 1.5px at 30% 30%, rgba(200,220,255,0.3) 50%, transparent 50%),
+    radial-gradient(1px 1px at 65% 85%, rgba(255,255,255,0.25) 50%, transparent 50%),
+    radial-gradient(2px 2px at 80% 20%, rgba(200,220,255,0.4) 50%, transparent 50%),
+    radial-gradient(1px 1px at 45% 90%, rgba(255,255,255,0.2) 50%, transparent 50%),
+    radial-gradient(1.5px 1.5px at 90% 45%, rgba(200,220,255,0.35) 50%, transparent 50%),
+    radial-gradient(1px 1px at 5% 50%, rgba(255,255,255,0.3) 50%, transparent 50%),
+    radial-gradient(2px 2px at 60% 10%, rgba(200,220,255,0.45) 50%, transparent 50%),
+    radial-gradient(1px 1px at 35% 65%, rgba(255,255,255,0.2) 50%, transparent 50%),
+    radial-gradient(3px 3px at 75% 50%, rgba(200,220,255,0.3) 50%, transparent 50%),
+    radial-gradient(1.5px 1.5px at 20% 40%, rgba(255,255,255,0.35) 50%, transparent 50%);
+  animation: particle-float 20s linear infinite;
+}
+
+@keyframes glow-drift-1 {
+  0%   { opacity: 0.5; transform: translate(0, 0) scale(1); }
+  100% { opacity: 0.8; transform: translate(80px, 30px) scale(1.2); }
+}
+
+@keyframes glow-drift-2 {
+  0%   { opacity: 0.4; transform: translate(0, 0) scale(1); }
+  100% { opacity: 0.7; transform: translate(-60px, -40px) scale(1.15); }
+}
+
+@keyframes glow-drift-3 {
+  0%   { opacity: 0.3; transform: translate(0, 0) scale(1); }
+  100% { opacity: 0.55; transform: translate(40px, -30px) scale(1.1); }
+}
+
+@keyframes particle-float {
+  0%   { background-position: 0 0; }
+  100% { background-position: 50px -30px; }
+}

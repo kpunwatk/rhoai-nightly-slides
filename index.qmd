@@ -11,6 +11,8 @@ format:
     width: 1920
     height: 1080
     css: styles.css
+    title-slide-attributes:
+      data-background-gradient: "linear-gradient(135deg, #0d1b2a 0%, #1b2838 25%, #162447 50%, #1f4068 75%, #1b2838 100%)"
 ---
 
 ## Agenda
@@ -52,25 +54,19 @@ cd olminstall
 
 ## Architecture Overview
 
-```{style="font-size: 0.8em; line-height: 1.2;"}
-┌───────────────────────────────────────┐
-│       openshift-marketplace           │
-│   CatalogSource (rhoai-catalog-dev)   │
-└───────────────────┬───────────────────┘
-                    ▼
-┌───────────────────────────────────────┐
-│       redhat-ods-operator             │
-│  Subscription → InstallPlan → CSV     │
-│              → Operator               │
-└───────────────────┬───────────────────┘
-                    ▼
-┌───────────────────────────────────────┐
-│     redhat-ods-applications           │
-│  DataScienceCluster → Components      │
-│  (Dashboard, KServe, TrustyAI,        │
-│   ModelRegistry, Workbenches)         │
-└───────────────────────────────────────┘
-```
+::: {style="font-size: 0.8em; line-height: 1.8; text-align: center;"}
+
+[openshift-marketplace<br>CatalogSource (rhoai-catalog-dev)]{style="display:inline-block; padding: 15px 40px; background-color: #1a5276; color: white; border-radius: 8px; font-size: 1.2em; margin: 10px;"}
+
+⬇
+
+[redhat-ods-operator<br>Subscription → InstallPlan → CSV → Operator]{style="display:inline-block; padding: 15px 40px; background-color: #7d3c98; color: white; border-radius: 8px; font-size: 1.2em; margin: 10px;"}
+
+⬇
+
+[redhat-ods-applications<br>DataScienceCluster → Components<br>(Dashboard, KServe, TrustyAI, ModelRegistry, Workbenches)]{style="display:inline-block; padding: 15px 40px; background-color: #1e8449; color: white; border-radius: 8px; font-size: 1.2em; margin: 10px;"}
+
+:::
 
 ## Step 1 — Get the Nightly Image
 
@@ -114,7 +110,7 @@ subscription.operators.coreos.com/rhoai-operator-dev created
 
 ## Step 1 — Web Console Demo
 
-{{< video demos/02-operator-console.mp4 >}}
+{{< video demos/02-operator-console.mp4 height="1000" >}}
 
 ## Step 2 — Create DataScienceCluster & Verify {style="font-size: 0.9em;"}
 
@@ -174,9 +170,11 @@ oc get dsci -A
 
 ![](images/trustyai-not-ready.png){.r-stretch fig-align="center"}
 
+## TrustyAI DeploymentsNotReady — Cause & Fix
+
 **Symptom:** DSC shows `DeploymentsNotReady` for TrustyAI even though pods are running
 
-**Root cause:** Image pull secret or ServiceAccount gets regenerated, causing a transient pod failure. The pod self-heals, but `rhods-operator` never re-reconciles — so the DSC shows stale status.
+**Root cause:** Image pull secret or ServiceAccount gets regenerated, causing a transient pod failure. Pod self-heals, but `rhods-operator` never re-reconciles — DSC shows stale status.
 
 **Fix:**
 
@@ -185,7 +183,7 @@ oc annotate trustyai default-trustyai \
   opendatahub.io/manual-reconcile=$(date +%s) --overwrite
 ```
 
-This forces a fresh reconcile → controller sees healthy deployment → flips `TrustyAIReady: True`
+Forces a fresh reconcile → controller sees healthy deployment → flips `TrustyAIReady: True`
 
 ## Subscription Channel Mismatch
 
@@ -201,7 +199,9 @@ oc patch subscription rhoai-operator-dev -n redhat-ods-operator \
   --type merge -p '{"spec":{"channel":"beta"}}'
 ```
 
-**Prevention:** Use the correct `-u` flag when running setup:
+## Channel Mismatch — Prevention
+
+**Use the correct `-u` flag when running setup:**
 
 ```bash
 # For EA/nightly builds, use beta channel
@@ -217,19 +217,21 @@ oc get packagemanifest rhoai -n openshift-marketplace \
 
 ## ROSA HCP: Pull Secret Workaround
 
-**Problem:** On ROSA-hosted clusters, the global pull-secret in `openshift-config` gets **immediately rewritten** back to original — you can't add registry credentials the normal way ([OCPBUGS-23901](https://issues.redhat.com/browse/OCPBUGS-23901))
+**Problem:** On ROSA-hosted clusters, the global pull-secret in `openshift-config` gets **immediately rewritten** back to original ([OCPBUGS-23901](https://issues.redhat.com/browse/OCPBUGS-23901))
 
-**Why it matters:** Installing nightly/RC builds requires pull access to `brew.registry.redhat.io` or `quay.io/rhoai` — without the pull secret, image pulls fail
+**Why it matters:** Nightly builds require pull access to `brew.registry.redhat.io` or `quay.io/rhoai` — without the pull secret, image pulls fail
 
-**Solution:** Use **Kyverno** to inject pull secrets into every pod:
+**Solution:** Use **Kyverno** to inject pull secrets into every pod
+
+## ROSA HCP: Workaround Steps
 
 1. Create a secret `pull-secret-brew` in `openshift-config` with your registry credentials
 2. Deploy Kyverno to auto-sync the secret to **all namespaces**
 3. Kyverno policy adds the secret to every pod's `imagePullSecrets`
 
-**Steps:** [ROSA Pull Secret Workaround Doc](https://docs.google.com/document/d/12FoMt1_djxEkhuAsRjU40aIxnlo-0SATK-E4qihYQdQ)
+**Prerequisites:** `jq`, `yq`, and `~/.docker/config.json` with credentials
 
-**Prerequisites:** `jq`, `yq`, and `~/.docker/config.json` with credentials for `brew.registry.redhat.io` and/or `quay.io`
+**Full steps:** [ROSA Pull Secret Workaround Doc](https://docs.google.com/document/d/12FoMt1_djxEkhuAsRjU40aIxnlo-0SATK-E4qihYQdQ)
 
 ## Q&A
 
