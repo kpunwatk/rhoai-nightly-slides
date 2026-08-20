@@ -240,7 +240,8 @@ Karishma Punwatkar &amp; Shelton Cyril
 <ul>
 <li>Test latest features <strong>before GA release</strong></li>
 <li>Validate changes early in the development cycle</li>
-<li>CatalogSource points to dev image: <code>quay.io/rhoai/rhoai-fbc-fragment:rhoai-&lt;release-version&gt;@sha256:&lt;digest&gt;</code></li>
+<li>Catch integration issues between components before release</li>
+<li>Verify our TrustyAI changes work within the full RHOAI stack</li>
 </ul>
 </section>
 <section id="prerequisites" class="slide level2">
@@ -311,16 +312,12 @@ subscription.operators.coreos.com/rhoai-operator-dev created</code></pre>
 <h2>Step 1 — Web Console Demo</h2>
 <video id="video_shortcode_videojs_video1" class="video-js vjs-default-skin vjs-big-play-centered vjs-fluid" controls="" preload="auto" data-setup="{}" title=""><source src="demos/02-operator-console.mp4"></video>
 </section>
-<section id="step-2-create-datasciencecluster-verify" class="slide level2">
+<section id="step-2-create-datasciencecluster-verify" class="slide level2" style="font-size: 0.9em;">
 <h2>Step 2 — Create DataScienceCluster &amp; Verify</h2>
 <ul>
 <li>Create DSC via <strong>Web Console</strong>: Operators → Installed Operators → RHOAI → Data Science Cluster → Create</li>
 <li>Or via CLI: <code>./create-dsc.sh</code></li>
-</ul>
-<p>Once created, verify:</p>
-<ul>
-<li>DSC reaches <strong>Ready</strong> phase</li>
-<li>All pods in <code>redhat-ods-applications</code> are <strong>Running/Completed</strong></li>
+<li>Verify: DSC reaches <strong>Ready</strong> phase, all pods in <code>redhat-ods-applications</code> are <strong>Running/Completed</strong></li>
 </ul>
 
 <img data-src="images/dsc-ready-console.png" class="r-stretch quarto-figure quarto-figure-center"></section>
@@ -408,12 +405,26 @@ subscription.operators.coreos.com/rhoai-operator-dev created</code></pre>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb10"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb10-1"><a aria-label="1"></a><span class="ex">oc</span> get packagemanifest rhoai <span class="at">-n</span> openshift-marketplace <span class="dt">\</span></span>
 <span id="cb10-2"><a aria-label="2"></a>  <span class="at">-o</span> jsonpath=<span class="st">'{.status.channels[*].name}'</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
+<section id="rosa-hcp-pull-secret-workaround" class="slide level2">
+<h2>ROSA HCP: Pull Secret Workaround</h2>
+<p><strong>Problem:</strong> On ROSA-hosted clusters, the global pull-secret in <code>openshift-config</code> gets <strong>immediately rewritten</strong> back to original — you can’t add registry credentials the normal way (<a href="https://issues.redhat.com/browse/OCPBUGS-23901">OCPBUGS-23901</a>)</p>
+<p><strong>Why it matters:</strong> Installing nightly/RC builds requires pull access to <code>brew.registry.redhat.io</code> or <code>quay.io/rhoai</code> — without the pull secret, image pulls fail</p>
+<p><strong>Solution:</strong> Use <strong>Kyverno</strong> to inject pull secrets into every pod:</p>
+<ol type="1">
+<li>Create a secret <code>pull-secret-brew</code> in <code>openshift-config</code> with your registry credentials</li>
+<li>Deploy Kyverno to auto-sync the secret to <strong>all namespaces</strong></li>
+<li>Kyverno policy adds the secret to every pod’s <code>imagePullSecrets</code></li>
+</ol>
+<p><strong>Steps:</strong> <a href="https://docs.google.com/document/d/12FoMt1_djxEkhuAsRjU40aIxnlo-0SATK-E4qihYQdQ">ROSA Pull Secret Workaround Doc</a></p>
+<p><strong>Prerequisites:</strong> <code>jq</code>, <code>yq</code>, and <code>~/.docker/config.json</code> with credentials for <code>brew.registry.redhat.io</code> and/or <code>quay.io</code></p>
+</section>
 <section id="qa" class="slide level2">
 <h2>Q&amp;A</h2>
 <p><strong>Resources:</strong></p>
 <ul>
-<li>Install repo: <code>olminstall</code></li>
+<li>Install repo: <a href="https://gitlab.cee.redhat.com/data-hub/olminstall">gitlab.cee.redhat.com/data-hub/olminstall</a></li>
 <li>Cleanup guide: <code>COMPLETE-CLEANUP-README.md</code></li>
+<li>ROSA pull secret workaround: <a href="https://docs.google.com/document/d/12FoMt1_djxEkhuAsRjU40aIxnlo-0SATK-E4qihYQdQ">Google Doc</a></li>
 </ul>
 <p>Thank you!</p>
 

@@ -18,7 +18,7 @@
     "href": "index.html#why-nightly-builds",
     "title": "Installing RHOAI Nightly Builds",
     "section": "Why Nightly Builds?",
-    "text": "Why Nightly Builds?\n\nTest latest features before GA release\nValidate changes early in the development cycle\nCatalogSource points to dev image: quay.io/rhoai/rhoai-fbc-fragment:rhoai-&lt;release-version&gt;@sha256:&lt;digest&gt;"
+    "text": "Why Nightly Builds?\n\nTest latest features before GA release\nValidate changes early in the development cycle\nCatch integration issues between components before release\nVerify our TrustyAI changes work within the full RHOAI stack"
   },
   {
     "objectID": "index.html#prerequisites",
@@ -67,7 +67,7 @@
     "href": "index.html#step-2-create-datasciencecluster-verify",
     "title": "Installing RHOAI Nightly Builds",
     "section": "Step 2 — Create DataScienceCluster & Verify",
-    "text": "Step 2 — Create DataScienceCluster & Verify\n\nCreate DSC via Web Console: Operators → Installed Operators → RHOAI → Data Science Cluster → Create\nOr via CLI: ./create-dsc.sh\n\nOnce created, verify:\n\nDSC reaches Ready phase\nAll pods in redhat-ods-applications are Running/Completed"
+    "text": "Step 2 — Create DataScienceCluster & Verify\n\nCreate DSC via Web Console: Operators → Installed Operators → RHOAI → Data Science Cluster → Create\nOr via CLI: ./create-dsc.sh\nVerify: DSC reaches Ready phase, all pods in redhat-ods-applications are Running/Completed"
   },
   {
     "objectID": "index.html#step-3-verify-trustyai",
@@ -112,10 +112,17 @@
     "text": "Subscription Channel Mismatch\nSymptom: Subscription fails to resolve — no InstallPlan created, operator never installs\nRoot cause: The catalog image (e.g., a 3.6 EA build) doesn’t publish the channel you specified (e.g., stable-3.6). EA/nightly builds often only exist in the beta channel.\nFix:\n# Patch the subscription to the correct channel\noc patch subscription rhoai-operator-dev -n redhat-ods-operator \\\n  --type merge -p '{\"spec\":{\"channel\":\"beta\"}}'\nPrevention: Use the correct -u flag when running setup:\n# For EA/nightly builds, use beta channel\n./setup.sh -t operator -u beta -i &lt;image-url&gt;\nCheck available channels before installing:\noc get packagemanifest rhoai -n openshift-marketplace \\\n  -o jsonpath='{.status.channels[*].name}'"
   },
   {
+    "objectID": "index.html#rosa-hcp-pull-secret-workaround",
+    "href": "index.html#rosa-hcp-pull-secret-workaround",
+    "title": "Installing RHOAI Nightly Builds",
+    "section": "ROSA HCP: Pull Secret Workaround",
+    "text": "ROSA HCP: Pull Secret Workaround\nProblem: On ROSA-hosted clusters, the global pull-secret in openshift-config gets immediately rewritten back to original — you can’t add registry credentials the normal way (OCPBUGS-23901)\nWhy it matters: Installing nightly/RC builds requires pull access to brew.registry.redhat.io or quay.io/rhoai — without the pull secret, image pulls fail\nSolution: Use Kyverno to inject pull secrets into every pod:\n\nCreate a secret pull-secret-brew in openshift-config with your registry credentials\nDeploy Kyverno to auto-sync the secret to all namespaces\nKyverno policy adds the secret to every pod’s imagePullSecrets\n\nSteps: ROSA Pull Secret Workaround Doc\nPrerequisites: jq, yq, and ~/.docker/config.json with credentials for brew.registry.redhat.io and/or quay.io"
+  },
+  {
     "objectID": "index.html#qa",
     "href": "index.html#qa",
     "title": "Installing RHOAI Nightly Builds",
     "section": "Q&A",
-    "text": "Q&A\nResources:\n\nInstall repo: olminstall\nCleanup guide: COMPLETE-CLEANUP-README.md\n\nThank you!"
+    "text": "Q&A\nResources:\n\nInstall repo: gitlab.cee.redhat.com/data-hub/olminstall\nCleanup guide: COMPLETE-CLEANUP-README.md\nROSA pull secret workaround: Google Doc\n\nThank you!"
   }
 ]
