@@ -34,7 +34,8 @@ format:
 
 - Test latest features **before GA release**
 - Validate changes early in the development cycle
-- CatalogSource points to dev image: `quay.io/rhoai/rhoai-fbc-fragment:rhoai-<release-version>@sha256:<digest>`
+- Catch integration issues between components before release
+- Verify our TrustyAI changes work within the full RHOAI stack
 
 ## Prerequisites
 
